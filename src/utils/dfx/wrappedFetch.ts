@@ -20,14 +20,14 @@ const wrappedFetchInternal = (
     return;
   }
   if (useICUrl) {
-    resource = new URL(resource);
-    resource.host = IC_URL_HOST;
-  }
+    wrappedFetchInternal(fetch, resolve, reject, resource.replace(PLUG_PROXY_HOST, IC_URL_HOST), ...initArgs);
+}
   fetch(resource, ...initArgs)
     .then(r => {
       if (!useICUrl && r.status === 502) {
         useICUrl = true;
-        wrappedFetchInternal(resolve, reject, resource, initArgs);
+        console.log('RECALL');
+        wrappedFetchInternal(fetch, resolve, reject, resource.replace(PLUG_PROXY_HOST, IC_URL_HOST), ...initArgs);
         return;
       }
       resolve(r);
