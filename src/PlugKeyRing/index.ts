@@ -2,27 +2,20 @@ import CryptoJS from 'crypto-js';
 import { PublicKey } from '@dfinity/agent';
 import { BinaryBlob } from '@dfinity/candid';
 import { Principal } from '@dfinity/principal';
-import { NFTDetails, NFTCollection } from '@psychedelic/dab-js';
+import { NFTDetails, NFTCollection, TokenInterfaces } from '@psychedelic/dab-js';
 import JsonBigInt from 'json-bigint';
 
 import { KeyringStorage, StorageData } from '../interfaces/storage';
 import { PlugState } from '../interfaces/plug_keyring';
-import { TokenBalance } from '../interfaces/plug_wallet';
+import { TokenBalance, StandardToken} from '../interfaces/token';
 import { GetTransactionsResponse } from '../interfaces/transactions';
-
-
 import { ERRORS } from '../errors';
 import PlugWallet from '../PlugWallet';
 import { createAccount, getAccountId } from '../utils/account';
-import { SendOpts } from '../utils/dfx/ledger/methods';
-import { SendResponse } from '../utils/dfx/token';
 import Storage from '../utils/storage';
 import { validatePrincipalId } from './utils';
-import { StandardToken } from '../interfaces/ext';
-import { BurnResult } from '../interfaces/xtc';
 import { ConnectedApp } from '../interfaces/account';
 import { recursiveParseBigint } from '../utils/object';
-import { TOKENS } from '../constants/tokens';
 import { handleStorageUpdate } from '../utils/storage/utils';
 import { getVersion } from '../utils/version';
 
@@ -164,7 +157,7 @@ class PlugKeyRing {
     to: string;
     amount: string;
     subAccount: number;
-  }): Promise<BurnResult> => {
+  }): Promise<TokenInterfaces.BurnResult> => {
     this.checkUnlocked();
     const index = (subAccount ?? this.currentWalletId) || 0;
     const { wallets } = this.state;
@@ -290,7 +283,7 @@ class PlugKeyRing {
     canisterId: string,
     standard = 'ext',
     subAccount?: number
-  ): Promise<Array<StandardToken>> => {
+  ): Promise<Array<TokenBalance>> => {
     this.checkUnlocked();
     const index = (subAccount ?? this.currentWalletId) || 0;
     const { wallets } = this.state;
@@ -307,7 +300,7 @@ class PlugKeyRing {
   public removeToken = async (
     canisterId: string,
     subAccount?: number
-  ): Promise<Array<StandardToken>> => {
+  ): Promise<Array<TokenBalance>> => {
     this.checkUnlocked();
     const index = (subAccount ?? this.currentWalletId) || 0;
     const { wallets } = this.state;
@@ -329,7 +322,6 @@ class PlugKeyRing {
     const index = (subAccount ?? this.currentWalletId) || 0;
     this.validateSubaccount(index);
     const wallet = this.state.wallets[index];
-    if (token.symbol === TOKENS.ICP.symbol) return wallet.getICPBalance();
     return wallet.getTokenBalance(token);
   };
 
@@ -380,9 +372,9 @@ class PlugKeyRing {
   public send = async (
     to: string,
     amount: string,
-    canisterId?: string,
-    opts?: SendOpts
-  ): Promise<SendResponse> => {
+    canisterId: string,
+    opts?: TokenInterfaces.SendOpts
+  ): Promise<TokenInterfaces.SendResponse> => {
     this.checkUnlocked();
     const currentWalletNumber = this.currentWalletId;
     let account = to;
